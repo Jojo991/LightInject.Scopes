@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Scopes.Areas.Identity;
 using Scopes.Data;
+using System.Linq;
 
 namespace Scopes
 {
@@ -44,6 +45,8 @@ namespace Scopes
 				.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>
 				>();
 			services.AddSingleton<WeatherForecastService>();
+
+			//var s = services.Where(sd => sd.ServiceType.Name.Contains()
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

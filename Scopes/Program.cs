@@ -1,3 +1,4 @@
+using LightInject;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 
@@ -12,7 +13,13 @@ namespace Scopes
 
 		public static IHostBuilder CreateHostBuilder(string[] args) =>
 			Host.CreateDefaultBuilder(args)
-			    .UseLightInject()
-			    .ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>());
+				.UseLightInject(services =>
+				{
+					var container = (ServiceContainer)services;
+					var optionsField = container.GetType().GetField("options", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+					ContainerOptions options = (ContainerOptions)optionsField.GetValue(container);
+					options.EnableCurrentScope = false;
+				})
+				.ConfigureWebHostDefaults(webBuilder => webBuilder.UseStartup<Startup>());
 	}
 }
