@@ -3299,15 +3299,38 @@ namespace LightInject
             return instanceDelegate(constantsWithArguments, scope);
         }
 
+        private static long getCount = 0;
+
+        private static HashSet<object> navigationManagers = new HashSet<object>();
+
+        private static HashSet<Scope> scopes = new HashSet<Scope>();
+
         internal object TryGetInstance(Type serviceType, Scope scope)
         {
+            // Note: requested 9 times before first page renders completely 
+            
+            
+            
             var instanceDelegate = delegates.Search(serviceType);
             if (instanceDelegate == null)
             {
                 instanceDelegate = CreateDefaultDelegate(serviceType, throwError: false);
             }
 
-            return instanceDelegate(constants.Items, scope);
+            var instance = instanceDelegate(constants.Items, scope);
+
+            if (serviceType.Name == "NavigationManager")
+            {
+                if (getCount == 13)
+                {
+
+                }
+                getCount++;
+                navigationManagers.Add(instance);
+                scopes.Add(scope);
+            }
+            
+            return instance;
         }
 
         internal object TryGetInstance(Type serviceType, string serviceName, Scope scope)

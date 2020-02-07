@@ -38,6 +38,7 @@
 namespace LightInject.Microsoft.DependencyInjection
 {
     using System;
+    using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.Linq;
@@ -107,18 +108,21 @@ namespace LightInject.Microsoft.DependencyInjection
             }
 
             var rootScope = container.BeginScope();
+            //rootScope.Tag = "IsRootScope";
             rootScope.Completed += (a, s) => container.Dispose();
             container.RegisterSingleton<IServiceProvider>(f => new LightInjectServiceProvider(rootScope));
-            container.RegisterSingleton<IServiceScopeFactory>(f => new LightInjectServiceScopeFactory(container));
+            container.Register<IServiceScopeFactory>(f => new LightInjectServiceScopeFactory(container), new PerRootScopeLifetime(rootScope));
             RegisterServices(container, rootScope, serviceCollection);
-            //return new LightInjectServiceScope(rootScope).ServiceProvider;
-            return container.GetInstance<IServiceProvider>();
+            return new LightInjectServiceScope(rootScope).ServiceProvider;
+            //return container.GetInstance<IServiceProvider>();
         }
 
         private static void RegisterServices(IServiceContainer container, Scope rootScope, IServiceCollection serviceCollection)
         {
             var test = serviceCollection.Where(sd => sd.ImplementationType != null && sd.ImplementationType.Name == "RemoteNavigationManager").FirstOrDefault();
+            var test2 = serviceCollection.Where(sd => sd.ServiceType != null && sd.ServiceType.Name == "NavigationManager").ToArray();
             
+
             var registrations = serviceCollection.Select(d => CreateServiceRegistration(d, rootScope)).ToList();
 
             for (int i = 0; i < registrations.Count; i++)
@@ -403,6 +407,10 @@ namespace LightInject.Microsoft.DependencyInjection
     {
         private readonly Scope wrappedScope;
 
+        private static int scopecount;
+
+        private int scopeId;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="LightInjectServiceScope"/> class.
         /// </summary>
@@ -411,6 +419,9 @@ namespace LightInject.Microsoft.DependencyInjection
         {
             wrappedScope = scope;
             ServiceProvider = new LightInjectServiceProvider(scope);
+            scopecount++;
+            scopeId = scopecount;
+            Debug.WriteLine("Create Scope" + scopeId);
         }
 
         /// <inheritdoc/>
@@ -421,6 +432,7 @@ namespace LightInject.Microsoft.DependencyInjection
         /// </summary>
         public void Dispose()
         {
+            Debug.WriteLine("Scope dispose " + scopeId);
             wrappedScope.Dispose();
         }
     }
